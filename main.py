@@ -1,5 +1,7 @@
 import logging
 import logging.config
+import aiohttp
+import asyncio
 
 import requests
 import telegram
@@ -13,12 +15,24 @@ logger = logging.getLogger(__name__)
 
 
 async def check_dvmn_status(context, chat_id):
-    logger.info("Запуск опроса dvmn")
+    logger.info("Запуск long polling для dvmn")
+
+    try:
+        dvmn_token = config.DEVMAN_TOKEN
+    except AttributeError as e:
+        logger.critical("DEVMAN_TOKEN не найден в config: %s", e)
+        raise
+
+    if not dvmn_token or not isinstance(dvmn_token, str):
+        logger.critical("DEVMAN_TOKEN пуст или неверного типа: %s")
+        raise ValueError("DEVMAN_TOKEN пуст или неверного типа")
+    
+    logger.debug("DEVMAN_TOKEN получен, его длинна %s символов", len(dvmn_token))
 
     url = "https://dvmn.org/api/long_polling/"
     headers = {"Authorization": f"Token {config.DEVMAN_TOKEN}"}
     params = {}
-    timeout = 110
+    timeout = aiohttp.ClientTimeout(total=120)
 
     while True:
         response = requests.get(

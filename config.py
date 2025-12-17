@@ -36,6 +36,6 @@ LOGGING_CONFIG = {
         },
     },
     "loggers": {
-        "__main__": {"level": "INFO", "handlers": ["logfile", "console"]},
+        "__main__": {"level": "DEBUG", "handlers": ["logfile", "console"]},
     },
 }

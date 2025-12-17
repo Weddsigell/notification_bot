@@ -61,6 +61,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await check_dvmn_status(context, chat_id)
 
+
 async def on_shutdown(app: Application) -> None:
     logger.info("Бот остановлен пользователем")
 
@@ -75,17 +76,18 @@ def main() -> None:
         raise
 
     if not token or not isinstance(token, str):
-        logger.critical(
-            "Токен бота пуст или неверного типа: %s"
-        )
+        logger.critical("Токен бота пуст или неверного типа: %s")
         raise ValueError("Токен бота пуст или неверного типа")
 
-    logger.debug(
-        "Токен бота получен, его длинна %s символов", len(token)
-    )
+    logger.debug("Токен бота получен, его длинна %s символов", len(token))
 
     try:
-        app = Application.builder().token(token).post_shutdown(on_shutdown).build()
+        app = (
+            Application.builder()
+            .token(token)
+            .post_shutdown(on_shutdown)
+            .build()
+        )
         logger.info("Бот создан")
     except ValueError as e:
         logger.critical("Неверный или пустой токен бота: %s", e)

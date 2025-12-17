@@ -1,0 +1,11 @@
+[project]
+name = "notification-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.6"
+dependencies = [
+    "environs>=14.5.0",
+    "python-telegram-bot>=22.5",
+    "requests>=2.32.5",
+]

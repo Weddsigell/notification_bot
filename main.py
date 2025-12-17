@@ -53,12 +53,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         user_id = config.TG_CHAT_ID
     except AttributeError as e:
-        logger.critical("Id пользователя не найден в config: %s", e)
+        logger.critical("TG_CHAT_ID не найден в config: %s", e)
         raise
 
     if not user_id or not isinstance(user_id, int):
-        logger.critical("Id пользователя пуст или неверного типа: %s")
-        raise ValueError("Id пользователя пуст или неверного типа")
+        logger.critical("TG_CHAT_ID пуст или неверного типа: %s")
+        raise ValueError("TG_CHAT_ID пуст или неверного типа")
+    
+    logger.debug("TG_CHAT_ID получен - %s", user_id)
 
     if not chat_id == user_id:
         await update.message.reply_text("Доступ запрещён")
@@ -84,14 +86,14 @@ def main() -> None:
     try:
         token = config.TG_BOT_TOKEN
     except AttributeError as e:
-        logger.critical("Токен бота не найден в config: %s", e)
+        logger.critical("TG_BOT_TOKEN не найден в config: %s", e)
         raise
 
     if not token or not isinstance(token, str):
-        logger.critical("Токен бота пуст или неверного типа: %s")
-        raise ValueError("Токен бота пуст или неверного типа")
+        logger.critical("TG_BOT_TOKEN пуст или неверного типа: %s")
+        raise ValueError("TG_BOT_TOKEN пуст или неверного типа")
 
-    logger.debug("Токен бота получен, его длинна %s символов", len(token))
+    logger.debug("TG_BOT_TOKEN получен, его длинна %s символов", len(token))
 
     try:
         app = (

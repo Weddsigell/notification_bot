@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import logging.config
 
@@ -101,6 +102,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_user.id
     logger.debug("Бот получил обновление от пользователя %s", chat_id)
 
+    if context.chat_data.get("bot_task"):
+        await update.message.reply_text("Бот уже во всю работает!")
+        return
+
     try:
         user_id = config.TG_CHAT_ID
     except AttributeError as e:
@@ -124,11 +129,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         chat_id,
     )
 
-    await check_dvmn_status(context, chat_id)
+    task = asyncio.create_task(check_dvmn_status(context, chat_id))
+    context.chat_data["bot_task"] = task
+    logger.debug("Создана задача")
 
 
 async def on_shutdown(app: Application) -> None:
-    logger.info("Бот остановлен пользователем")
+    logger.info("Бот останавливается")
+
+    for chat_id, chat_data in app.chat_data.items():
+        task = chat_data.get("bot_task")
+        if task:
+            logger.info("Отмена задачи long polling для chat_id=%s", chat_id)
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                logger.info("Бот остановлен! вручную!")
 
 
 def main() -> None:
@@ -177,7 +194,7 @@ def main() -> None:
         logger.critical("Неожиданная ошибка бота: %s", e, exc_info=True)
         raise
     finally:
-        logger.info("Бот завершил работу")
+        logger.info("Бот, программа завершили работу")
 
 
 if __name__ == "__main__":

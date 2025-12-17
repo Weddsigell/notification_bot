@@ -48,15 +48,26 @@ async def check_dvmn_status(context, chat_id):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_user.id
+    logger.debug('Бот получил обновление от пользователя %s', chat_id)
 
-    if not chat_id == config.TG_CHAT_ID:
+    try:
+        user_id = config.TG_CHAT_ID
+    except AttributeError as e:
+        logger.critical("Id пользователя не найден в config: %s", e)
+        raise
+
+    if not user_id or not isinstance(user_id, int):
+        logger.critical("Id пользователя пуст или неверного типа: %s")
+        raise ValueError("Id пользователя пуст или неверного типа")
+
+    if not chat_id == user_id:
         await update.message.reply_text("Доступ запрещён")
         logger.warning("Пользователю %s доступ запрещен", chat_id)
 
         return
 
     logger.warning(
-        "Пользователь запустил бота в тг",
+        "Пользователь %s запустил бота в тг", chat_id,
     )
 
     await check_dvmn_status(context, chat_id)

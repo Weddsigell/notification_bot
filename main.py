@@ -24,7 +24,7 @@ async def check_dvmn_status(context, chat_id):
         raise
 
     if not dvmn_token or not isinstance(dvmn_token, str):
-        logger.critical("DEVMAN_TOKEN пуст или неверного типа: %s")
+        logger.critical("DEVMAN_TOKEN пуст или неверного типа")
         raise ValueError("DEVMAN_TOKEN пуст или неверного типа")
     
     logger.debug("DEVMAN_TOKEN получен, его длинна %s символов", len(dvmn_token))
@@ -71,7 +71,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         raise
 
     if not user_id or not isinstance(user_id, int):
-        logger.critical("TG_CHAT_ID пуст или неверного типа: %s")
+        logger.critical("TG_CHAT_ID пуст или неверного типа")
         raise ValueError("TG_CHAT_ID пуст или неверного типа")
     
     logger.debug("TG_CHAT_ID получен - %s", user_id)
@@ -104,7 +104,7 @@ def main() -> None:
         raise
 
     if not token or not isinstance(token, str):
-        logger.critical("TG_BOT_TOKEN пуст или неверного типа: %s")
+        logger.critical("TG_BOT_TOKEN пуст или неверного типа")
         raise ValueError("TG_BOT_TOKEN пуст или неверного типа")
 
     logger.debug("TG_BOT_TOKEN получен, его длинна %s символов", len(token))

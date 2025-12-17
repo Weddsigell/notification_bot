@@ -28,5 +28,5 @@ LOGGING_CONFIG = {
             "mode": "w",
         },
     },
-    "loggers": {"root": {"level": "DEBUG", "handlers": ["logfile"]}},
+    "loggers": {"__main__": {"level": "DEBUG", "handlers": ["logfile"]}},
 }

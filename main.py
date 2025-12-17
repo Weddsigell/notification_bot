@@ -2,6 +2,7 @@ import logging
 import logging.config
 
 import requests
+import telegram
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
@@ -60,21 +61,56 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await check_dvmn_status(context, chat_id)
 
+async def on_shutdown(app: Application) -> None:
+    logger.info("Бот остановлен пользователем")
 
-def main():
-    logger.info("Начало работы программы")
 
-    token = config.TG_BOT_TOKEN
-    if not token:
-        logger.critical("Программа не получила тг токен")
-        return
+def main() -> None:
+    logger.info("Запуск программы notification_bot")
 
-    app = Application.builder().token(token).build()
-    logger.info("Бот запущен")
+    try:
+        token = config.TG_BOT_TOKEN
+    except AttributeError as e:
+        logger.critical("Токен бота не найден в config: %s", e)
+        raise
+
+    if not token or not isinstance(token, str):
+        logger.critical(
+            "Токен бота пуст или неверного типа: %s"
+        )
+        raise ValueError("Токен бота пуст или неверного типа")
+
+    logger.debug(
+        "Токен бота получен, его длинна %s символов", len(token)
+    )
+
+    try:
+        app = Application.builder().token(token).post_shutdown(on_shutdown).build()
+        logger.info("Бот создан")
+    except ValueError as e:
+        logger.critical("Неверный или пустой токен бота: %s", e)
+        raise
+    except telegram.error.InvalidToken as e:
+        logger.critical("Токен бота недействителен: %s", e)
+        raise
+    except Exception as e:
+        logger.critical(
+            "Неожиданная ошибка при создании бота: %s", e, exc_info=True
+        )
+        raise
 
     app.add_handler(CommandHandler("start", start))
 
-    app.run_polling()
+    try:
+        logger.info("Бот начинает работу")
+        app.run_polling(drop_pending_updates=True)
+    except telegram.error.NetworkError as e:
+        logger.error("Сетевая ошибка Telegram: %s", e)
+    except Exception as e:
+        logger.critical("Неожиданная ошибка бота: %s", e, exc_info=True)
+        raise
+    finally:
+        logger.info("Бот завершил работу")
 
 
 if __name__ == "__main__":

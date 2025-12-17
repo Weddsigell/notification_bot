@@ -1,3 +1,4 @@
+from logging import handlers
 from environs import Env
 
 env = Env()
@@ -21,12 +22,20 @@ LOGGING_CONFIG = {
     "handlers": {
         "logfile": {
             "formatter": "default",
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "filename": "notification_bot.log",
             "encoding": "utf-8",
             "mode": "w",
         },
+        "console": {
+            "formatter": "default",
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        },
     },
-    "loggers": {"__main__": {"level": "DEBUG", "handlers": ["logfile"]}},
+    "loggers": {
+        "__main__": {"level": "INFO", "handlers": ["logfile", "console"]},
+    },
 }

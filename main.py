@@ -48,54 +48,77 @@ async def check_dvmn_status(context, chat_id):
             logger.debug(
                 "Get запрос с параметрами url: %s, params: %s", url, params
             )
-            async with session.get(url, params=params) as response:
-                status = response.status
-                raw_text = await response.text()
+            try:
+                async with session.get(url, params=params) as response:
+                    status = response.status
+                    raw_text = await response.text()
 
-                if not status == 200:
-                    logger.error(
-                        "Получен ответ. Код: %s\nТекст: %s",
-                        status,
-                        raw_text,
-                    )
-                    continue
+                    if not status == 200:
+                        logger.error(
+                            "Получен ответ. Код: %s\nТекст: %s",
+                            status,
+                            raw_text,
+                        )
+                        continue
 
-                try:
-                    response_json = await response.json()
-                except Exception as e:
-                    logger.error("Не удалось распарсить ответ в json: %s", e)
-                    continue
-                finally:
+                    try:
+                        response_json = await response.json()
+                    except Exception as e:
+                        logger.error(
+                            "Не удалось распарсить ответ в json: %s", e
+                        )
+                        continue
+                    finally:
+                        logger.debug(
+                            "Получен ответ. Код: %s\nТекст: %s",
+                            status,
+                            raw_text,
+                        )
+
+                dvmn_status = response_json["status"]
+
+                if dvmn_status == "found":
+                    logger.info("Получен ответ от dvmn")
+
+                    new_attempts = response_json["new_attempts"]
+
+                    for attempt in new_attempts:
+                        name_lesson = attempt["lesson_title"]
+                        lesson_url = attempt["lesson_url"]
+                        text = f"Работа <{name_lesson}> по ссылке <{lesson_url}> проверена!\n"
+
+                        if attempt["is_negative"]:
+                            text += "К сожалению есть ошибки, нужно исправить!"
+                        else:
+                            text += "Ты большой молодец, ошибок нет!"
+
+                        await context.bot.send_message(
+                            chat_id=chat_id, text=text
+                        )
+                        logger.info("Пользователь получил уведомление")
+
+                    timestamp = response_json["last_attempt_timestamp"]
+                    params["timestamp"] = timestamp
                     logger.debug(
-                        "Получен ответ. Код: %s\nТекст: %s",
-                        status,
-                        raw_text,
+                        "Временная метка изменилась на last_attempt_timestamp %s",
+                        timestamp,
                     )
 
-            dvmn_status = response_json["status"]
-
-            if dvmn_status == "found":
-                new_attempts = response_json.get("new_attempts")
-
-                for attempt in new_attempts:
-                    name_lesson = attempt["lesson_title"]
-                    text = f"Работа {name_lesson} проверена!\n"
-
-                    if attempt["is_negative"]:
-                        text += "К сожалению есть ошибки, нужно исправить!"
-                    else:
-                        text += "Ты большой молодец, ошибок нет!"
-
-                    context.bot.send_message(chat_id=chat_id, text=text)
-
-            timestamp_to_request = int(
-                response_json.get("timestamp_to_request")
-            )
-
-            if timestamp_to_request is not None:
-                params["timestamp"] = timestamp_to_request
-            else:
-                params.clear()
+                timestamp = response_json.get("timestamp_to_request")
+                if timestamp is not None:
+                    params["timestamp"] = timestamp
+                    logger.debug(
+                        "Временная метка изменилась на timestamp_to_request: %s",
+                        timestamp,
+                    )
+            except asyncio.CancelledError:
+                logger.warning("остановка long polling для dvmn")
+                raise
+            except Exception as e:
+                logger.error(
+                    "Ошибка в long polling: %s Повтор через 10 секунд", e
+                )
+                await asyncio.sleep(10)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

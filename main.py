@@ -48,7 +48,7 @@ async def check_dvmn_status(context, chat_id):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_user.id
-    logger.debug('Бот получил обновление от пользователя %s', chat_id)
+    logger.debug("Бот получил обновление от пользователя %s", chat_id)
 
     try:
         user_id = config.TG_CHAT_ID
@@ -67,7 +67,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     logger.warning(
-        "Пользователь %s запустил бота в тг", chat_id,
+        "Пользователь %s запустил бота в тг",
+        chat_id,
     )
 
     await check_dvmn_status(context, chat_id)

@@ -15,11 +15,12 @@ async def check_dvmn_status():
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_user.id != config.TG_CHAT_ID:
+    chat_id = update.effective_user.id
+    if chat_id != config.TG_CHAT_ID:
         await update.message.reply_text("Доступ запрещён")
         return
 
-    await check_dvmn_status()
+    await check_dvmn_status(context, chat_id)
 
 
 def main():

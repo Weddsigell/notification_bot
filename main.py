@@ -7,6 +7,8 @@ import config
 
 
 async def check_dvmn_status(update, context):
+    tg_chat_id = context.application.bot_data["tg_chat_id"]
+    dvmn_token = context.application.bot_data["dvmn_token"]
     url = "https://dvmn.org/api/long_polling/"
     headers = {"Authorization": f"Token {dvmn_token}"}
     params = {}
@@ -34,7 +36,9 @@ async def check_dvmn_status(update, context):
                     else:
                         text += "Ты большой молодец, ошибок нет!"
 
-                    await context.bot.send_message(chat_id=chat_id, text=text)
+                    await context.bot.send_message(
+                        chat_id=tg_chat_id, text=text
+                    )
 
                 timestamp = response["last_attempt_timestamp"]
                 params["timestamp"] = timestamp
@@ -42,7 +46,10 @@ async def check_dvmn_status(update, context):
             timestamp = response.get("timestamp_to_request")
             if timestamp is not None:
                 params["timestamp"] = timestamp
-        except requests.HTTPError:
+        except requests.exceptions.ReadTimeout:
+            time.sleep(15)
+            continue
+        except requests.exceptions.HTTPError:
             time.sleep(15)
             continue
         except ConnectionError:
@@ -51,9 +58,13 @@ async def check_dvmn_status(update, context):
 
 
 def main():
-    token = config.TG_BOT_TOKEN
+    tg_bot_token = config.TG_BOT_TOKEN
+    tg_chat_id = config.TG_CHAT_ID
+    dvmn_token = config.DEVMAN_TOKEN
 
-    app = Application.builder().token(token).build()
+    app = Application.builder().token(tg_bot_token).build()
+    app.bot_data["dvmn_token"] = dvmn_token
+    app.bot_data["chat_id"] = tg_chat_id
 
     app.add_handler(CommandHandler("start", check_dvmn_status))
 

@@ -21,7 +21,7 @@ async def check_dvmn_status(update, context):
             )
             response.raise_for_status()
 
-            response = await response.json()
+            response = response.json()
 
             if response["status"] == "found":
                 new_attempts = response["new_attempts"]
@@ -64,7 +64,7 @@ def main():
 
     app = Application.builder().token(tg_bot_token).build()
     app.bot_data["dvmn_token"] = dvmn_token
-    app.bot_data["chat_id"] = tg_chat_id
+    app.bot_data["tg_chat_id"] = tg_chat_id
 
     app.add_handler(CommandHandler("start", check_dvmn_status))
 

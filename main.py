@@ -1,3 +1,5 @@
+import time
+
 import requests
 from telegram.ext import Application, CommandHandler
 
@@ -11,44 +13,41 @@ async def check_dvmn_status(update, context):
     timeout = 120
 
     while True:
-        response = requests.get(url=url, headers=headers, params=params, timeout=timeout)
-            status = response.status
+        try:
+            response = requests.get(
+                url=url, headers=headers, params=params, timeout=timeout
+            )
+            response.raise_for_status()
 
-            if not status == 200:
-                continue
+            response = await response.json()
 
-            try:
-                response_json = await response.json()
-            except Exception:
-                continue
-            finally:
-                pass
+            if response["status"] == "found":
+                new_attempts = response["new_attempts"]
 
-        dvmn_status = response_json["status"]
+                for attempt in new_attempts:
+                    name_lesson = attempt["lesson_title"]
+                    lesson_url = attempt["lesson_url"]
+                    text = f"Работа <{name_lesson}> по ссылке <{lesson_url}> проверена!\n"
 
-        if dvmn_status == "found":
-            new_attempts = response_json["new_attempts"]
+                    if attempt["is_negative"]:
+                        text += "К сожалению есть ошибки, нужно исправить!"
+                    else:
+                        text += "Ты большой молодец, ошибок нет!"
 
-            for attempt in new_attempts:
-                name_lesson = attempt["lesson_title"]
-                lesson_url = attempt["lesson_url"]
-                text = f"Работа <{name_lesson}> по ссылке <{lesson_url}> проверена!\n"
+                    await context.bot.send_message(chat_id=chat_id, text=text)
 
-                if attempt["is_negative"]:
-                    text += "К сожалению есть ошибки, нужно исправить!"
-                else:
-                    text += "Ты большой молодец, ошибок нет!"
+                timestamp = response["last_attempt_timestamp"]
+                params["timestamp"] = timestamp
 
-                await context.bot.send_message(
-                    chat_id=chat_id, text=text
-                )
-
-            timestamp = response_json["last_attempt_timestamp"]
-            params["timestamp"] = timestamp
-
-        timestamp = response_json.get("timestamp_to_request")
-        if timestamp is not None:
-            params["timestamp"] = timestamp
+            timestamp = response.get("timestamp_to_request")
+            if timestamp is not None:
+                params["timestamp"] = timestamp
+        except requests.HTTPError:
+            time.sleep(15)
+            continue
+        except ConnectionError:
+            time.sleep(15)
+            continue
 
 
 def main():

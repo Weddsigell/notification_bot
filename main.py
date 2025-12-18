@@ -39,10 +39,7 @@ async def check_dvmn_status(context, chat_id):
         headers=headers, timeout=timeout
     ) as session:
         logger.debug(
-            "Запуск сессии с параметрами headers: %s, timeout: %s",
-            headers,
-            timeout,
-        )
+            "Запуск http сессии с параметрами headers, timeout")
 
         while True:
             logger.debug(
